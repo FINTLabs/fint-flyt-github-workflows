@@ -1,0 +1,40 @@
+name: Java App CD Deploy
+
+on:
+  workflow_call:
+    inputs:
+      deploy-targets:
+        description: JSON array with org and cluster deploy targets.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  image:
+    name: Resolve image
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    outputs:
+      image-ref: ${{ steps.image.outputs.image-ref }}
+    steps:
+      - name: Resolve image reference
+        id: image
+        run: |
+          image_name="$(echo "${{ github.event.workflow_run.head_repository.full_name }}" | tr '[:upper:]' '[:lower:]')"
+          echo "image-ref=ghcr.io/${image_name}:${{ github.event.workflow_run.head_sha }}" >> "${GITHUB_OUTPUT}"
+
+  deploy:
+    needs: image
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-deploy-matrix.yaml@refactor/reusable-github-workflows-pilot
+    permissions:
+      contents: read
+      packages: read
+    with:
+      image-ref: ${{ needs.image.outputs.image-ref }}
+      deploy-targets: ${{ inputs.deploy-targets }}
+    secrets: inherit
