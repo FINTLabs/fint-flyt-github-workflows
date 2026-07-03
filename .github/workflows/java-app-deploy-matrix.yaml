@@ -1,0 +1,33 @@
+name: Java App Deploy Matrix
+
+on:
+  workflow_call:
+    inputs:
+      image-ref:
+        description: Full GHCR image reference to deploy.
+        required: true
+        type: string
+      deploy-targets:
+        description: JSON array with org and cluster deploy targets.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.org }} to ${{ matrix.cluster }}
+    strategy:
+      matrix:
+        include: ${{ fromJSON(inputs.deploy-targets) }}
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-deploy-aks.yaml@refactor/reusable-github-workflows-pilot
+    permissions:
+      contents: read
+      packages: read
+    with:
+      org: ${{ matrix.org }}
+      cluster: ${{ matrix.cluster }}
+      image-ref: ${{ inputs.image-ref }}
+    secrets: inherit

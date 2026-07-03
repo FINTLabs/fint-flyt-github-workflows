@@ -1,0 +1,84 @@
+name: Java App Deploy AKS
+
+on:
+  workflow_call:
+    inputs:
+      org:
+        description: Kubernetes namespace/organisation to deploy to.
+        required: true
+        type: string
+      cluster:
+        description: AKS cluster name.
+        required: true
+        type: string
+      image-ref:
+        description: Full GHCR image reference to deploy.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.org }} to ${{ inputs.cluster }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ inputs.cluster }}-${{ inputs.org }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Determine environment
+        id: environment
+        uses: actions/github-script@v9
+        with:
+          script: return '${{ inputs.cluster }}'.split('-')[1];
+          result-encoding: string
+
+      - name: Determine resource group
+        id: resource-group
+        uses: actions/github-script@v9
+        with:
+          script: return 'rg-aks-${{ steps.environment.outputs.result }}';
+          result-encoding: string
+
+      - name: Validate overlay path
+        run: |
+          overlay_path="kustomize/overlays/${{ inputs.org }}/${{ steps.environment.outputs.result }}"
+          test -d "${overlay_path}"
+
+      - name: Bake manifests
+        id: bake
+        uses: azure/k8s-bake@v5
+        with:
+          renderEngine: kustomize
+          kustomizationPath: kustomize/overlays/${{ inputs.org }}/${{ steps.environment.outputs.result }}
+
+      - name: Azure login
+        uses: azure/login@v4
+        with:
+          creds: ${{ secrets[format('AKS_{0}_FINT_GITHUB', steps.environment.outputs.result)] }}
+
+      - name: Install kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: v0.2.19
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v5
+        with:
+          cluster-name: ${{ inputs.cluster }}
+          resource-group: ${{ steps.resource-group.outputs.result }}
+          admin: true
+          use-kubelogin: true
+
+      - name: Deploy to AKS
+        uses: azure/k8s-deploy@v6
+        with:
+          action: deploy
+          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          images: ${{ inputs.image-ref }}
+          namespace: ${{ inputs.org }}
