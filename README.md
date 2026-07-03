@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-build-image.yaml@refactor/reusable-github-workflows-pilot
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-build-image.yaml@main
     permissions:
       contents: read
       packages: write
@@ -39,7 +39,7 @@ on:
 
 jobs:
   build:
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-library-ci.yaml@refactor/reusable-github-workflows-pilot
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-library-ci.yaml@main
 ```
 
 Publishing to Reposilite is handled by `java-library-publish-reposilite.yaml` on release events.
