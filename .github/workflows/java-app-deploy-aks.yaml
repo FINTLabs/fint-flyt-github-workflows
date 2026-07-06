@@ -27,6 +27,7 @@ jobs:
     concurrency:
       group: deploy-${{ inputs.cluster }}-${{ inputs.org }}
       cancel-in-progress: false
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -62,7 +63,7 @@ jobs:
         uses: azure/k8s-artifact-substitute@v2.0.0
         with:
           manifests: ${{ steps.bake.outputs.manifestsBundle }}
-          images: ${{ inputs.image-tags }}
+          images: ${{ inputs.image-ref }}
 
       - name: Azure login
         uses: azure/login@v3
@@ -86,6 +87,7 @@ jobs:
         uses: azure/k8s-deploy@v6
         with:
           action: deploy
-          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          manifests: ${{ steps.substitute.outputs.manifests }}
           images: ${{ inputs.image-ref }}
           namespace: ${{ inputs.org }}
+          pull-images: false
