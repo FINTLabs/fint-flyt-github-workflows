@@ -52,13 +52,13 @@ jobs:
 
       - name: Bake manifests
         id: bake
-        uses: azure/k8s-bake@v5
+        uses: azure/k8s-bake@v4
         with:
           renderEngine: kustomize
           kustomizationPath: kustomize/overlays/${{ inputs.org }}/${{ steps.environment.outputs.result }}
 
       - name: Azure login
-        uses: azure/login@v4
+        uses: azure/login@v3
         with:
           creds: ${{ secrets[format('AKS_{0}_FINT_GITHUB', steps.environment.outputs.result)] }}
 
