@@ -57,6 +57,13 @@ jobs:
           renderEngine: kustomize
           kustomizationPath: kustomize/overlays/${{ inputs.org }}/${{ steps.environment.outputs.result }}
 
+      - name: Substitute image into baked YAML
+        id: substitute
+        uses: azure/k8s-artifact-substitute@v2.0.0
+        with:
+          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          images: ${{ inputs.image-tags }}
+
       - name: Azure login
         uses: azure/login@v3
         with:
