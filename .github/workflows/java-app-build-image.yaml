@@ -35,7 +35,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     outputs:
-      image-ref: ${{ steps.image.outputs.image-ref }}
+      image-ref: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -57,13 +57,19 @@ jobs:
       - name: Build with Gradle
         run: ${{ inputs.build-command }}
 
-      - name: Derive image reference
+      - name: Derive image name
         id: image
         run: |
           image_name="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
-          image_ref="${REGISTRY}/${image_name}:${GITHUB_SHA}"
           echo "image-name=${image_name}" >> "${GITHUB_OUTPUT}"
-          echo "image-ref=${image_ref}" >> "${GITHUB_OUTPUT}"
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.image.outputs.image-name }}
+          tags: |
+            type=sha,format=long,prefix=
 
       - name: Log in to GHCR
         if: inputs.push-image
@@ -78,4 +84,5 @@ jobs:
         with:
           context: .
           push: ${{ inputs.push-image }}
-          tags: ${{ steps.image.outputs.image-ref }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
