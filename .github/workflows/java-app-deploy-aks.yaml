@@ -58,6 +58,41 @@ jobs:
           renderEngine: kustomize
           kustomizationPath: kustomize/overlays/${{ inputs.org }}/${{ steps.environment.outputs.result }}
 
+      - name: Substitute image into baked YAML
+        id: substitute
+        shell: bash
+        env:
+          IMAGE_REF: ${{ inputs.image-ref }}
+          MANIFESTS: ${{ steps.bake.outputs.manifestsBundle }}
+        run: |
+          image_name="${IMAGE_REF%:*}"
+          substituted_manifests="${RUNNER_TEMP}/manifests-substituted"
+          mkdir -p "${substituted_manifests}"
+
+          while IFS= read -r manifest; do
+            [ -n "${manifest}" ] || continue
+
+            if [ -d "${manifest}" ]; then
+              cp -R "${manifest}/." "${substituted_manifests}/"
+            elif [ -f "${manifest}" ]; then
+              cp "${manifest}" "${substituted_manifests}/"
+            else
+              echo "::error::Manifest path does not exist: ${manifest}"
+              exit 1
+            fi
+          done <<< "${MANIFESTS}"
+
+          export IMAGE_REF image_name
+          find "${substituted_manifests}" -type f \( -name '*.yaml' -o -name '*.yml' \) \
+            -exec perl -0pi -e 's{\Q$ENV{image_name}\E:[A-Za-z0-9_.-]+}{$ENV{IMAGE_REF}}g' {} +
+
+          if grep -R -q -F "${image_name}:sha-" "${substituted_manifests}"; then
+            echo "::error::Image placeholder was not replaced for ${image_name}"
+            exit 1
+          fi
+
+          echo "manifests=${substituted_manifests}" >> "${GITHUB_OUTPUT}"
+
       - name: Azure login
         uses: azure/login@v3
         with:
@@ -74,7 +109,7 @@ jobs:
         uses: azure/k8s-deploy@v6
         with:
           action: deploy
-          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          manifests: ${{ steps.substitute.outputs.manifests }}
           images: ${{ inputs.image-ref }}
           namespace: ${{ inputs.org }}
           pull-images: false
