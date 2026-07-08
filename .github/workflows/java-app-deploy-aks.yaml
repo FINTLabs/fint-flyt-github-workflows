@@ -60,20 +60,43 @@ jobs:
 
       - name: Substitute image into baked YAML
         id: substitute
-        uses: azure/k8s-artifact-substitute@v2.0.0
-        with:
-          manifests: ${{ steps.bake.outputs.manifestsBundle }}
-          images: ${{ inputs.image-ref }}
+        shell: bash
+        env:
+          IMAGE_REF: ${{ inputs.image-ref }}
+          MANIFESTS: ${{ steps.bake.outputs.manifestsBundle }}
+        run: |
+          image_name="${IMAGE_REF%:*}"
+          substituted_manifests="${RUNNER_TEMP}/manifests-substituted"
+          mkdir -p "${substituted_manifests}"
+
+          while IFS= read -r manifest; do
+            [ -n "${manifest}" ] || continue
+
+            if [ -d "${manifest}" ]; then
+              cp -R "${manifest}/." "${substituted_manifests}/"
+            elif [ -f "${manifest}" ]; then
+              cp "${manifest}" "${substituted_manifests}/"
+            else
+              echo "::error::Manifest path does not exist: ${manifest}"
+              exit 1
+            fi
+          done <<< "${MANIFESTS}"
+
+          export IMAGE_REF image_name
+          find "${substituted_manifests}" -type f \( -name '*.yaml' -o -name '*.yml' \) \
+            -exec perl -0pi -e 's{\Q$ENV{image_name}\E:[A-Za-z0-9_.-]+}{$ENV{IMAGE_REF}}g' {} +
+
+          if grep -R -q -F "${image_name}:sha-" "${substituted_manifests}"; then
+            echo "::error::Image placeholder was not replaced for ${image_name}"
+            exit 1
+          fi
+
+          echo "manifests=${substituted_manifests}" >> "${GITHUB_OUTPUT}"
 
       - name: Azure login
         uses: azure/login@v3
         with:
           creds: ${{ secrets[format('AKS_{0}_FINT_GITHUB', steps.environment.outputs.result)] }}
-
-      - name: Install kubelogin
-        uses: azure/use-kubelogin@v1
-        with:
-          kubelogin-version: v0.2.19
 
       - name: Set AKS context
         uses: azure/aks-set-context@v5
@@ -81,7 +104,6 @@ jobs:
           cluster-name: ${{ inputs.cluster }}
           resource-group: ${{ steps.resource-group.outputs.result }}
           admin: true
-          use-kubelogin: true
 
       - name: Deploy to AKS
         uses: azure/k8s-deploy@v6
