@@ -1,0 +1,40 @@
+name: Java Dependency Submission
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Java version to use for the Gradle dependency resolution.
+        required: false
+        type: string
+        default: "25"
+      additional-arguments:
+        description: Additional arguments to pass to Gradle when resolving dependencies.
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  submit:
+    name: Submit dependency graph
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java-version }}
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v6
+        with:
+          additional-arguments: ${{ inputs.additional-arguments }}
