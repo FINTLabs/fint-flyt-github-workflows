@@ -102,3 +102,41 @@ Publisering til Reposilite håndteres av
 `java-library-publish-reposilite.yaml` på release-events. Workflowen setter
 `RELEASE_VERSION` fra release-taggen og bruker `REPOSILITE_USERNAME` og
 `REPOSILITE_PASSWORD` fra secrets.
+
+## Dependency submission
+
+`java-dependency-submission.yaml` løser hele det transitive avhengighetstreet
+med Gradle og sender det til GitHub sitt Dependency Submission API. Uten dette
+er avhengighetsgrafen tom for Gradle-pakker, og da har Dependabot ingenting å
+matche sikkerhetsvarsler mot.
+
+Denne workflowen trengs bare i **private** repoer. Public repoer får det samme
+gratis gjennom GitHub sin innebygde «Automatic Dependency Submission», som ikke
+er tilgjengelig for private repoer på Team-planen.
+
+Merk at Dependabot sine versjonsoppdateringer virker uavhengig av dette —
+de leser `build.gradle.kts` direkte. Det er kun sikkerhetsvarslene som er
+avhengige av grafen.
+
+Kall workflowen på push til `main`, slik at grafen alltid speiler default
+branch. Et ukentlig schedule sørger for at grafen sendes inn på nytt selv i
+perioder uten commits.
+
+```yaml
+name: Dependency Submission
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "24 3 * * 1"
+
+jobs:
+  submit:
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-dependency-submission.yaml@main
+    permissions:
+      contents: write
+```
+
+Workflowen krever `contents: write` for å kunne sende inn grafen.
