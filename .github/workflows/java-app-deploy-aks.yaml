@@ -65,6 +65,14 @@ jobs:
           manifests: ${{ steps.bake.outputs.manifestsBundle }}
           images: ${{ inputs.image-ref }}
 
+      - name: Copy substituted manifest into workspace
+        id: workspace-manifest
+        run: |
+          mkdir -p .k8s-deploy
+          dest="$GITHUB_WORKSPACE/.k8s-deploy/$(basename "${{ steps.substitute.outputs.manifests }}")"
+          cp "${{ steps.substitute.outputs.manifests }}" "$dest"
+          echo "manifest=$dest" >> "$GITHUB_OUTPUT"
+
       - name: Azure login
         uses: azure/login@v3
         with:
@@ -79,10 +87,10 @@ jobs:
           use-kubelogin: true
 
       - name: Deploy to AKS
-        uses: azure/k8s-deploy@v6
+        uses: azure/k8s-deploy@v7
         with:
           action: deploy
-          manifests: ${{ steps.substitute.outputs.manifests }}
+          manifests: ${{ steps.workspace-manifest.outputs.manifest }}
           images: ${{ inputs.image-ref }}
           namespace: ${{ inputs.org }}
           pull-images: false
