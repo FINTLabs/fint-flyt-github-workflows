@@ -79,7 +79,7 @@ jobs:
           use-kubelogin: true
 
       - name: Deploy to AKS
-        uses: azure/k8s-deploy@v6
+        uses: azure/k8s-deploy@v7
         with:
           action: deploy
           manifests: ${{ steps.substitute.outputs.manifests }}
