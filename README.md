@@ -33,8 +33,9 @@ jobs:
 ```
 
 CD-workflows bruker `java-app-cd-deploy.yaml` med en repo-spesifikk JSON-liste
-over `org`/`cluster`-targets. Den felles workflowen sjekker at CI-bygg på
-`main` er vellykket, finner image fra bygget og deployer til target-listen.
+over `org`/`cluster`-targets. Den felles workflowen deployer bare når CI-bygget
+er vellykket og kommer fra en push til `main` i samme repo. Image-referansen
+bygges fra repoets eget navn og commit-SHA, og deployes til target-listen.
 
 Manuelle deploys kan bruke `java-app-deploy-aks.yaml` direkte med én `org`, én
 `cluster` og image-referansen fra build-jobben.

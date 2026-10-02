@@ -35,15 +35,19 @@ jobs:
       - name: Determine environment
         id: environment
         uses: actions/github-script@v9
+        env:
+          CLUSTER: ${{ inputs.cluster }}
         with:
-          script: return '${{ inputs.cluster }}'.split('-')[1];
+          script: return process.env.CLUSTER.split('-')[1];
           result-encoding: string
 
       - name: Determine resource group
         id: resource-group
         uses: actions/github-script@v9
+        env:
+          ENVIRONMENT: ${{ steps.environment.outputs.result }}
         with:
-          script: return 'rg-aks-${{ steps.environment.outputs.result }}';
+          script: return `rg-aks-${process.env.ENVIRONMENT}`;
           result-encoding: string
 
       - name: Validate overlay path
