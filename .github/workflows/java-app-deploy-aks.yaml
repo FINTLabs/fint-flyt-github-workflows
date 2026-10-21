@@ -98,3 +98,4 @@ jobs:
           images: ${{ inputs.image-ref }}
           namespace: ${{ inputs.org }}
           pull-images: false
+          annotate-resources: false
