@@ -91,11 +91,7 @@ jobs:
           use-kubelogin: true
 
       - name: Deploy to AKS
-        uses: azure/k8s-deploy@v7
-        with:
-          action: deploy
-          manifests: ${{ steps.workspace-manifest.outputs.manifest }}
-          images: ${{ inputs.image-ref }}
-          namespace: ${{ inputs.org }}
-          pull-images: false
-          annotate-resources: false
+        env:
+          MANIFEST: ${{ steps.workspace-manifest.outputs.manifest }}
+          NAMESPACE: ${{ inputs.org }}
+        run: kubectl apply -f "$MANIFEST" --namespace "$NAMESPACE"
