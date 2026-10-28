@@ -30,11 +30,11 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Determine environment
         id: environment
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           CLUSTER: ${{ inputs.cluster }}
         with:
@@ -43,7 +43,7 @@ jobs:
 
       - name: Determine resource group
         id: resource-group
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           ENVIRONMENT: ${{ steps.environment.outputs.result }}
         with:
@@ -57,14 +57,14 @@ jobs:
 
       - name: Bake manifests
         id: bake
-        uses: azure/k8s-bake@v4
+        uses: azure/k8s-bake@bf8bfd33b007edea820fe80983239bca24012239 # v4.1.1
         with:
           renderEngine: kustomize
           kustomizationPath: kustomize/overlays/${{ inputs.org }}/${{ steps.environment.outputs.result }}
 
       - name: Substitute image into baked YAML
         id: substitute
-        uses: azure/k8s-artifact-substitute@v2
+        uses: azure/k8s-artifact-substitute@158198edaa1482733b1ee54372e577c9aff7c6a8 # v2.0.0
         with:
           manifests: ${{ steps.bake.outputs.manifestsBundle }}
           images: ${{ inputs.image-ref }}
@@ -78,12 +78,12 @@ jobs:
           echo "manifest=$dest" >> "$GITHUB_OUTPUT"
 
       - name: Azure login
-        uses: azure/login@v3
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           creds: ${{ secrets[format('AKS_{0}_FINT_GITHUB', steps.environment.outputs.result)] }}
 
       - name: Set AKS context
-        uses: azure/aks-set-context@v5
+        uses: azure/aks-set-context@883bdc8d8d1d0fd87e66cc4ba6f0b618f9eb5281 # v5.0.1
         with:
           cluster-name: ${{ inputs.cluster }}
           resource-group: ${{ steps.resource-group.outputs.result }}
