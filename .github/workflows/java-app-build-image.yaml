@@ -33,7 +33,7 @@ permissions:
 jobs:
   build:
     name: Build image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       image-ref: ${{ steps.meta.outputs.tags }}
     steps:

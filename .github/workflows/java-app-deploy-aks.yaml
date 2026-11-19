@@ -23,7 +23,7 @@ permissions:
 jobs:
   deploy:
     name: Deploy ${{ inputs.org }} to ${{ inputs.cluster }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     concurrency:
       group: deploy-${{ inputs.cluster }}-${{ inputs.org }}
       cancel-in-progress: false
