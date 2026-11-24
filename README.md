@@ -6,6 +6,36 @@ Målet er at hvert applikasjons- og bibliotek-repo bare skal definere det som er
 repo-spesifikt, for eksempel deploy-targets, mens selve bygging, publisering og
 deploy ligger her.
 
+## Versjonering
+
+Workflowene versjoneres med release-tagger (`vX.Y.Z`). Kall dem med full
+commit-SHA og taggen som kommentar, ikke `@main`:
+
+```yaml
+uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-library-ci.yaml@<commit-sha> # v1.0.0
+```
+
+Interne kall mellom workflowene bruker lokale stier (`./.github/workflows/...`)
+og hentes derfor fra samme commit som kalleren har pinnet.
+
+Actions i stegene refereres med tag og låses til commit-SHA i
+`.github/workflows/actions.lock`, som GitHub sjekker når workflowen kjører.
+Filen genereres med [`gh actions-lock`](https://github.com/github/gh-actions-lock)
+og skal ikke redigeres for hånd. Dependabot oppdaterer den sammen med
+workflowene. Ved manuelle endringer i `uses:` kjører du `gh actions-lock`.
+
+Dependabot oppdaterer SHA og kommentar når det kommer en ny tag, så lenge
+repoet har `github-actions` i `.github/dependabot.yaml`:
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+```
+
 ## Java app
 
 Applikasjonsrepoer kan bruke `java-app-build-image.yaml` for CI-bygg og
@@ -23,7 +53,7 @@ on:
 
 jobs:
   build:
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-build-image.yaml@main
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-build-image.yaml@<commit-sha> # v1.0.0
     permissions:
       contents: read
       packages: write
@@ -65,14 +95,14 @@ on:
 
 jobs:
   build:
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-build-image.yaml@main
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-build-image.yaml@<commit-sha> # v1.0.0
     with:
       push-image: true
     secrets: inherit
 
   deploy:
     needs: build
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-deploy-aks.yaml@main
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-deploy-aks.yaml@<commit-sha> # v1.0.0
     with:
       org: ${{ inputs.org }}
       cluster: ${{ inputs.cluster }}
@@ -96,7 +126,7 @@ on:
 
 jobs:
   build:
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-library-ci.yaml@main
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-library-ci.yaml@<commit-sha> # v1.0.0
 ```
 
 Publisering til Reposilite håndteres av
@@ -135,7 +165,7 @@ on:
 
 jobs:
   submit:
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-dependency-submission.yaml@main
+    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-dependency-submission.yaml@<commit-sha> # v1.0.0
     permissions:
       contents: write
 ```

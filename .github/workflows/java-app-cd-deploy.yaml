@@ -21,7 +21,7 @@ jobs:
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       image-ref: ${{ steps.image.outputs.image-ref }}
     steps:
@@ -36,7 +36,7 @@ jobs:
 
   deploy:
     needs: image
-    uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-app-deploy-matrix.yaml@main
+    uses: ./.github/workflows/java-app-deploy-matrix.yaml
     permissions:
       contents: read
       packages: read
