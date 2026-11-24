@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Set up Java ${{ inputs.java-version }}
-        uses: actions/setup-java@v6.2.0
+        uses: actions/setup-java@v6.3.0
         with:
           distribution: temurin
           java-version: ${{ inputs.java-version }}
@@ -53,7 +53,7 @@ jobs:
           gradle-version: wrapper
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4.39.3
+        uses: github/codeql-action/init@v4.39.4
         with:
           languages: ${{ inputs.languages }}
           build-mode: manual
@@ -63,6 +63,6 @@ jobs:
         run: ${{ inputs.build-command }}
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4.39.3
+        uses: github/codeql-action/analyze@v4.39.4
         with:
           category: ${{ inputs.category }}
