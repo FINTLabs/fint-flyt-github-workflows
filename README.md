@@ -18,6 +18,12 @@ uses: FINTLabs/fint-flyt-github-workflows/.github/workflows/java-library-ci.yaml
 Interne kall mellom workflowene bruker lokale stier (`./.github/workflows/...`)
 og hentes derfor fra samme commit som kalleren har pinnet.
 
+Actions i stegene refereres med tag og låses til commit-SHA i
+`.github/workflows/actions.lock`, som GitHub sjekker når workflowen kjører.
+Filen genereres med [`gh actions-lock`](https://github.com/github/gh-actions-lock)
+og skal ikke redigeres for hånd. Dependabot oppdaterer den sammen med
+workflowene. Ved manuelle endringer i `uses:` kjører du `gh actions-lock`.
+
 Dependabot oppdaterer SHA og kommentar når det kommer en ny tag, så lenge
 repoet har `github-actions` i `.github/dependabot.yaml`:
 
